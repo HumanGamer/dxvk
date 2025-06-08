@@ -2494,11 +2494,22 @@ namespace dxvk {
         if (!resource)
           continue;
 
-        if (resource->requestEviction() && (heapUsage + minUnusedMemory > heapBudget + memoryEvicted)) {
+        bool evicted = resource->requestEviction();
+
+        if (evicted && (heapUsage + minUnusedMemory > heapBudget + memoryEvicted)) {
           m_relocations.addResource(std::move(resource), a, DxvkAllocationMode::NoDeviceMemory);
           memoryEvicted += a->getMemoryInfo().size;
         }
+
+        if (!evicted && memoryEvicted) {
+          // Relocate other resources within the chunk to reduce fragmentation
+          m_relocations.addResource(std::move(resource), a, DxvkAllocationModes(
+            DxvkAllocationMode::NoFallback, DxvkAllocationMode::NoAllocation));
+        }
       }
+
+      if (memoryEvicted)
+        pool.pageAllocator.killChunk(chunkIndex);
     }
   }
 
