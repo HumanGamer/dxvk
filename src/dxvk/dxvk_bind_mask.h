@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <type_traits>
 
 #include "dxvk_buffer.h"
@@ -144,7 +145,7 @@ namespace dxvk {
       if (!mask)
         return -1;
       
-      return BitCount * intId + bit::tzcnt(mask);
+      return BitCount * intId + bit::tzcnt((uint32_t)mask);
     }
 
     bool operator == (const DxvkBindingSet& other) const {
